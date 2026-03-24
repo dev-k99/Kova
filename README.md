@@ -1,225 +1,179 @@
-# 🛒 ShopHub - Enterprise E-Commerce Platform
+# Kova
 
-A production-ready, full-featured e-commerce shopping cart application built with modern web technologies. Features include real-time cart management, wishlist functionality, admin analytics dashboard, and persistent state management.
+A production-grade e-commerce storefront built with React 18, TypeScript, and Zustand. Features a full shopping experience — product browsing, cart, wishlist, Paystack checkout, and an admin dashboard — styled with an editorial Open Fashion aesthetic.
 
-**🔗 Live Demo:** [Live Demo](https://shopping-cart-orcin-tau-79.vercel.app/) 
+**Live Demo:** [kova.vercel.app](https://shopping-cart-orcin-tau-79.vercel.app/)
 
 ---
 
-## 📸 Screenshots
+## Screenshots
 
-### 🏠 Landing Page
+### Home
 ![Home Page](screenshots/home-page.png)
 
-### 🛍️ Product Catalog
+### Shop
 ![Products catalog](screenshots/products.png)
 
-### 💝 Wishlist Management
-![Wishlish](screenshots/wishlist.png)
+### Wishlist
+![Wishlist](screenshots/wishlist.png)
 
-### 🛒 Shopping Cart
+### Cart
 ![Shopping Cart](screenshots/shopping-cart.png)
 
-### 📊 Admin Dashboard
+### Admin Dashboard
 ![Admin Dashboard](screenshots/admin-dashboard.png)
 
 ---
 
-## ✨ Key Features
+## Features
 
-### 🎯 Core Functionality
-- **Product Catalog** - Browse 20+ products from FakeStore API with images, descriptions, and ratings
-- **Advanced Filtering** - Search, category filter, and multi-criteria sorting (price, rating, name)
-- **Shopping Cart** - Add/remove items, adjust quantities, real-time total calculation
-- **Wishlist System** - Save favorite items, batch add to cart, persistent storage
-- **Admin Dashboard** - Real-time analytics, sales metrics, product management
-- **Responsive Design** - Mobile-first approach, optimized for all screen sizes
-
-### 🔧 Technical Features
-- **TypeScript** - Full type safety and IntelliSense support
-- **State Management** - React Context API with custom hooks
-- **Local Storage** - Persistent cart and wishlist across sessions
-- **Toast Notifications** - Real-time user feedback for all actions
-- **Loading States** - Skeleton screens and spinners for better UX
-- **Error Handling** - Graceful error boundaries and user-friendly messages
-- **Code Splitting** - Lazy loading for optimal performance
-- **SEO Optimized** - Meta tags, semantic HTML, and accessibility features
+- **Product catalog** — 20 products from FakeStore API, URL-synced filters (search, category, sort), debounced search
+- **Product detail pages** — Two-column editorial layout, quantity selector, related products, breadcrumb navigation
+- **Quick View** — Hover any product card to preview without leaving the page
+- **Shopping cart** — Add/remove items, quantity controls, free shipping threshold, 15% VAT calculation
+- **Promo codes** — `KOVA10` (10% off), `NEWCUSTOMER` (15% off)
+- **Wishlist** — Persist saved items, add to cart from wishlist
+- **Checkout** — Paystack integration (ZAR), customer info form, payment success/failure screens
+- **Recently Viewed** — Persisted across sessions, displayed on the home page
+- **Skeleton loading** — Shimmer cards replace full-screen spinners during data fetch
+- **Admin dashboard** — Revenue, orders, category distribution, recent activity, product table
+- **Responsive** — Mobile-first, hamburger menu at 768px
+- **Accessible** — Skip-to-main link, ARIA labels, keyboard navigation, `aria-live` toast notifications
 
 ---
 
-## 🛠️ Technology Stack
+## Tech Stack
 
-### Frontend
-| Technology | Version | Purpose |
-|-----------|---------|---------|
-| **React** | 18.2 | UI library for building component-based interfaces |
-| **TypeScript** | 5.2 | Type-safe JavaScript for better developer experience |
-| **Vite** | 5.0 | Next-generation frontend tooling, lightning-fast HMR |
-| **React Router** | 6.20 | Client-side routing and navigation |
-
-### Styling
-| Technology | Purpose |
-|-----------|---------|
-| **CSS3** | Custom styles with CSS variables for theming |
-| **Flexbox/Grid** | Modern layout techniques |
-| **CSS Modules** | Scoped styling to prevent conflicts |
-
-### State Management
-| Technology | Purpose |
-|-----------|---------|
-| **Context API** | Global state management (Cart, Wishlist, Toast) |
-| **Custom Hooks** | Reusable stateful logic (useLocalStorage) |
-| **localStorage** | Client-side persistence |
-
-### External APIs
-| API | Purpose |
-|-----|---------|
-| **FakeStore API** | Product data, categories, and ratings |
-
-### Development Tools
-| Tool | Purpose |
-|------|---------|
-| **ESLint** | Code quality and consistency |
-| **TypeScript Compiler** | Type checking |
-| **Git** | Version control |
-
-### Deployment
-| Platform | Purpose |
-|----------|---------|
-| **Vercel** | Hosting, CI/CD, CDN distribution |
+| Layer | Technology |
+|---|---|
+| UI | React 18, TypeScript 5 |
+| Routing | React Router 6 |
+| State | Zustand + persist middleware |
+| Data fetching | TanStack Query v5 (5 min stale time, shared cache) |
+| Styling | Plain CSS with custom properties (BEM naming) |
+| Icons | lucide-react |
+| Payment | react-paystack (Paystack, ZAR) |
+| Tooling | Vite 5, ESLint |
+| Hosting | Vercel |
 
 ---
 
-## 📁 Project Structure
-
-```
-shopping-cart/
-├── public/                      # Static assets
-│   └── vite.svg
-├── src/
-│   ├── api/                     # API integration layer
-│   │   └── products.ts          # FakeStore API calls
-│   ├── components/              # Reusable React components
-│   │   ├── cart/                # Cart-related components
-│   │   │   ├── CartItem.tsx     # Individual cart item
-│   │   │   ├── CartSummary.tsx  # Order summary with calculations
-│   │   │   └── EmptyCart.tsx    # Empty state component
-│   │   ├── common/              # Shared UI components
-│   │   │   ├── Button.tsx       # Customizable button component
-│   │   │   ├── LoadingSpinner.tsx
-│   │   │   └── Toast.tsx        # Notification system
-│   │   ├── layout/              # Layout components
-│   │   │   ├── Header.tsx       # Navigation with cart/wishlist badges
-│   │   │   ├── Footer.tsx       # Site footer
-│   │   │   └── Layout.tsx       # Page wrapper
-│   │   └── products/            # Product display components
-│   │       ├── ProductCard.tsx  # Product card with wishlist toggle
-│   │       └── ProductGrid.tsx  # Responsive product grid
-│   ├── context/                 # React Context providers
-│   │   ├── CartContext.tsx      # Cart state management
-│   │   ├── WishlistContext.tsx  # Wishlist state management
-│   │   └── ToastContext.tsx     # Notification system
-│   ├── hooks/                   # Custom React hooks
-│   │   └── useLocalStorage.ts   # Persistent state hook
-│   ├── pages/                   # Page components (routes)
-│   │   ├── Home.tsx             # Landing page
-│   │   ├── Shop.tsx             # Product catalog
-│   │   ├── Cart.tsx             # Shopping cart
-│   │   ├── Wishlist.tsx         # Saved items
-│   │   └── AdminDashboard.tsx   # Analytics dashboard
-│   ├── types/                   # TypeScript type definitions
-│   │   ├── product.types.ts     # Product and filter types
-│   │   ├── cart.types.ts        # Cart-related types
-│   │   └── wishlist.types.ts    # Wishlist types
-│   ├── utils/                   # Utility functions
-│   │   ├── currency.ts          # Currency formatting
-│   │   └── storage.ts           # localStorage wrapper
-│   ├── App.tsx                  # Root component with routing
-│   ├── App.css                  # Global styles and CSS variables
-│   └── main.tsx                 # Application entry point
-├── index.html                   # HTML template
-├── package.json                 # Dependencies and scripts
-├── tsconfig.json                # TypeScript configuration
-├── vite.config.ts               # Vite configuration
-└── README.md                    # Documentation (you are here)
-```
-
----
-
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
-Ensure you have the following installed:
-
-- **Node.js** >= 18.0.0 ([Download](https://nodejs.org/))
-- **npm** >= 9.0.0 (comes with Node.js)
-- **Git** ([Download](https://git-scm.com/))
+- Node.js >= 18
+- npm >= 9
 
 ### Installation
 
-1. **Clone the repository**
-
 ```bash
-git clone https://github.com/dev-k99/ShopHub
+git clone https://github.com/dev-k99/Shopping-Cart
 cd shopping-cart
-```
-
-2. **Install dependencies**
-
-```bash
 npm install
 ```
 
-3. **Start development server**
+### Environment variables
+
+Copy `.env.example` to `.env` and fill in your values:
 
 ```bash
-npm run dev
+cp .env.example .env
 ```
 
-The application will open at `http://localhost:3000`
+```env
+VITE_PAYSTACK_PUBLIC_KEY=pk_test_your_key_here
+VITE_USD_TO_ZAR_RATE=18.5
+VITE_API_BASE_URL=https://fakestoreapi.com
+```
 
+> FakeStore API prices are in USD. `VITE_USD_TO_ZAR_RATE` converts them to ZAR at display time only — internal cart totals remain in USD.
 
-## 🎯 Core Features Deep Dive
+Get a free Paystack test key at [dashboard.paystack.com](https://dashboard.paystack.com) — no monthly fees, no real charges in test mode.
 
-### 🛍️ Shopping Cart System
+### Run
 
-**Features:**
-- Add/remove products with real-time updates
-- Quantity adjustment with increment/decrement controls
-- Automatic price calculation (subtotal, tax, shipping)
-- Free shipping threshold ($100+)
-- Persistent storage across browser sessions
+```bash
+npm run dev       # development server at localhost:3000
+npm run build     # production build
+npm run preview   # preview production build locally
+```
 
-### 💝 Wishlist Feature
+---
 
-**Features:**
-- One-click save/unsave products
-- Batch add to cart functionality
-- Visual heart icon toggle
-- Badge counter in navigation
-- Persistent across sessions
+## Project Structure
 
-**User Flow:**
-1. Browse products → Click heart icon
-2. Item added to wishlist with success notification
-3. Navigate to `/wishlist` to view saved items
-4. Add individual or all items to cart
+```
+src/
+├── api/
+│   └── products.ts              # FakeStore API + TanStack Query key factory
+├── components/
+│   ├── cart/
+│   │   ├── CartItem.tsx
+│   │   ├── CartSummary.tsx      # Promo codes, totals, checkout trigger
+│   │   ├── CheckoutModal.tsx    # Paystack payment flow
+│   │   ├── EmptyCart.tsx
+│   │   ├── PaymentFailed.tsx
+│   │   └── PaymentSuccess.tsx
+│   ├── common/
+│   │   ├── Button.tsx           # Loading state, Loader2 spinner
+│   │   ├── ErrorBoundary.tsx
+│   │   ├── LoadingSpinner.tsx
+│   │   ├── SkeletonCard.tsx     # Shimmer placeholder matching ProductCard
+│   │   └── Toast.tsx
+│   ├── layout/
+│   │   ├── Header.tsx           # Scroll-aware, mobile hamburger
+│   │   ├── Footer.tsx           # Multi-column, subtle admin link
+│   │   └── Layout.tsx           # Skip link, ErrorBoundary wrapper
+│   └── products/
+│       ├── ProductCard.tsx      # Links to detail page, Quick View button
+│       ├── ProductGrid.tsx      # Skeleton mode, onQuickView prop
+│       └── QuickView.tsx        # Overlay modal, Escape + scroll lock
+├── hooks/
+│   ├── useCart.ts
+│   ├── useWishlist.ts
+│   └── useToast.ts
+├── pages/
+│   ├── Home.tsx                 # Hero, features strip, featured, recently viewed
+│   ├── Shop.tsx                 # URL-synced filters, skeleton wiring
+│   ├── ProductDetail.tsx        # Full detail page, related products
+│   ├── Cart.tsx
+│   ├── Wishlist.tsx
+│   ├── AdminDashboard.tsx
+│   └── NotFound.tsx
+├── store/
+│   ├── cartStore.ts             # Zustand persist ('shopping-cart')
+│   ├── wishlistStore.ts         # Zustand persist ('wishlist')
+│   └── recentlyViewedStore.ts   # Zustand persist ('recently-viewed', max 8)
+├── types/
+│   ├── product.types.ts
+│   ├── cart.types.ts
+│   └── order.types.ts
+└── utils/
+    └── currency.ts              # formatPrice (USD → ZAR)
+```
 
-### 📊 Admin Dashboard
+---
 
-**Metrics Displayed:**
-- Total revenue with trend indicators
-- Order count and average order value
-- Product catalog statistics
-- Wishlist engagement metrics
-- Category distribution charts
-- Recent activity feed
-- Top products table with ratings
+## Promo Codes
 
+| Code | Discount |
+|---|---|
+| `KOVA10` | 10% off |
+| `NEWCUSTOMER` | 15% off |
 
-## 🤝 Contributing
+Applied before shipping and VAT. Discount is reflected in both the cart summary and the Paystack checkout total.
 
-Contributions are welcome!
+---
 
-</div>
+## Payment
+
+Checkout uses [Paystack](https://paystack.com) in ZAR. Payment is in demo mode on the live site — no real charges are made.
+
+To enable real test payments locally, add a `pk_test_` key to your `.env`. Paystack test card: `4084 0840 8408 4081`, any future expiry, CVV `408`.
+
+---
+
+## Admin
+
+The admin dashboard is accessible at `/admin`. The link is not in the main navigation — it sits at the bottom of the footer under Company. It displays store metrics derived from the live product catalog and current cart/wishlist state.
