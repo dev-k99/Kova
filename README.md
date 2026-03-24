@@ -11,8 +11,6 @@ A production-grade e-commerce storefront built with React 18, TypeScript, and Zu
 ### Home
 ![Home Page](screenshots/home-page.png)
 
-### Shop
-![Products catalog](screenshots/products.png)
 
 ### Wishlist
 ![Wishlist](screenshots/wishlist.png)
@@ -20,8 +18,6 @@ A production-grade e-commerce storefront built with React 18, TypeScript, and Zu
 ### Cart
 ![Shopping Cart](screenshots/shopping-cart.png)
 
-### Admin Dashboard
-![Admin Dashboard](screenshots/admin-dashboard.png)
 
 ---
 
