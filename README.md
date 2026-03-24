@@ -2,7 +2,7 @@
 
 A production-grade e-commerce storefront built with React 18, TypeScript, and Zustand. Features a full shopping experience — product browsing, cart, wishlist, Paystack checkout, and an admin dashboard — styled with an editorial Open Fashion aesthetic.
 
-**Live Demo:** [kova.vercel.app](https://shopping-cart-orcin-tau-79.vercel.app/)
+**Live Demo:** [kova-alpha-puce.vercel.app](https://kova-alpha-puce.vercel.app/)
 
 ---
 
@@ -68,7 +68,7 @@ A production-grade e-commerce storefront built with React 18, TypeScript, and Zu
 ### Installation
 
 ```bash
-git clone https://github.com/dev-k99/Shopping-Cart
+git clone https://github.com/dev-k99/Kova
 cd shopping-cart
 npm install
 ```
