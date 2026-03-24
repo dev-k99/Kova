@@ -6,17 +6,17 @@ interface LoadingSpinnerProps {
   fullScreen?: boolean;
 }
 
-const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ 
-  size = 'medium', 
-  fullScreen = false 
-}) => {
-  const containerClass = fullScreen ? 'spinner-container-fullscreen' : 'spinner-container';
-
-  return (
-    <div className={containerClass}>
-      <div className={`spinner spinner-${size}`}></div>
-    </div>
-  );
-};
+const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
+  size = 'medium',
+  fullScreen = false,
+}) => (
+  <div
+    className={fullScreen ? 'spinner-container--fullscreen' : 'spinner-container'}
+    role="status"
+    aria-label="Loading"
+  >
+    <div className={`spinner spinner--${size}`} aria-hidden />
+  </div>
+);
 
 export default LoadingSpinner;
