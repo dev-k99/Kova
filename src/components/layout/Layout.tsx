@@ -1,4 +1,5 @@
 import React, { type ReactNode } from 'react';
+import { ErrorBoundary } from '../common/ErrorBoundary';
 import Header from './Header';
 import Footer from './Footer';
 import Toast from '../common/Toast';
@@ -8,15 +9,16 @@ interface LayoutProps {
   children: ReactNode;
 }
 
-const Layout: React.FC<LayoutProps> = ({ children }) => {
-  return (
-    <div className="layout">
-      <Header />
-      <main className="main-content">{children}</main>
-      <Footer />
-      <Toast />
-    </div>
-  );
-};
+const Layout: React.FC<LayoutProps> = ({ children }) => (
+  <div className="layout">
+    <a href="#main-content" className="skip-link">Skip to main content</a>
+    <Header />
+    <main id="main-content" className="main-content">
+      <ErrorBoundary>{children}</ErrorBoundary>
+    </main>
+    <Footer />
+    <Toast />
+  </div>
+);
 
 export default Layout;
