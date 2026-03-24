@@ -1,121 +1,120 @@
-import React, { useEffect, useState } from 'react';
-import { productsApi } from '../api/products';
-import { Product } from '../types/product.types';
+import React, { useState, useMemo } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
+import { useDebounce } from 'use-debounce';
+import { productsApi, productQueryKeys } from '../api/products';
+import type { Product } from '../types/product.types';
 import ProductGrid from '../components/products/ProductGrid';
-import LoadingSpinner from '../components/common/LoadingSpinner';
+import QuickView from '../components/products/QuickView';
+import Button from '../components/common/Button';
 import './Shop.css';
 
 const Shop: React.FC = () => {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<string[]>([]);
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [sortBy, setSortBy] = useState<string>('name');
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const searchQuery      = searchParams.get('q')        ?? '';
+  const selectedCategory = searchParams.get('category') ?? 'all';
+  const sortBy           = searchParams.get('sort')     ?? 'name';
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  const [quickViewProduct, setQuickViewProduct] = useState<Product | null>(null);
 
-  useEffect(() => {
-    filterAndSortProducts();
-  }, [products, selectedCategory, searchQuery, sortBy]);
+  const [debouncedSearch] = useDebounce(searchQuery, 300);
 
-  const loadData = async () => {
-    try {
-      setIsLoading(true);
-      const [productsData, categoriesData] = await Promise.all([
-        productsApi.getAll(),
-        productsApi.getCategories(),
-      ]);
-      setProducts(productsData);
-      setCategories(categoriesData);
-      setError(null);
-    } catch (err) {
-      setError('Failed to load products. Please try again later.');
-      console.error(err);
-    } finally {
-      setIsLoading(false);
-    }
+  const updateParam = (key: string, value: string, defaultValue: string) => {
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (value === defaultValue) {
+          next.delete(key);
+        } else {
+          next.set(key, value);
+        }
+        return next;
+      },
+      { replace: true }
+    );
   };
 
-  const filterAndSortProducts = () => {
-    let filtered = [...products];
+  const {
+    data: products = [],
+    isLoading: productsLoading,
+    error: productsError,
+    refetch,
+  } = useQuery({
+    queryKey: productQueryKeys.lists(),
+    queryFn: productsApi.getAll,
+  });
 
-    // Filter by category
+  const { data: categories = [] } = useQuery({
+    queryKey: productQueryKeys.categories(),
+    queryFn: productsApi.getCategories,
+  });
+
+  const filteredProducts = useMemo(() => {
+    let result = [...products];
+
     if (selectedCategory !== 'all') {
-      filtered = filtered.filter((p) => p.category === selectedCategory);
+      result = result.filter((p) => p.category === selectedCategory);
     }
 
-    // Filter by search query
-    if (searchQuery) {
-      filtered = filtered.filter((p) =>
-        p.title.toLowerCase().includes(searchQuery.toLowerCase())
-      );
+    if (debouncedSearch) {
+      const q = debouncedSearch.toLowerCase();
+      result = result.filter((p) => p.title.toLowerCase().includes(q));
     }
 
-    // Sort products
     switch (sortBy) {
       case 'price-asc':
-        filtered.sort((a, b) => a.price - b.price);
+        result.sort((a, b) => a.price - b.price);
         break;
       case 'price-desc':
-        filtered.sort((a, b) => b.price - a.price);
+        result.sort((a, b) => b.price - a.price);
         break;
       case 'rating':
-        filtered.sort((a, b) => b.rating.rate - a.rating.rate);
+        result.sort((a, b) => b.rating.rate - a.rating.rate);
         break;
-      case 'name':
       default:
-        filtered.sort((a, b) => a.title.localeCompare(b.title));
-        break;
+        result.sort((a, b) => a.title.localeCompare(b.title));
     }
 
-    setFilteredProducts(filtered);
-  };
+    return result;
+  }, [products, selectedCategory, debouncedSearch, sortBy]);
 
-  if (isLoading) {
-    return <LoadingSpinner fullScreen />;
-  }
-
-  if (error) {
+  if (productsError) {
     return (
       <div className="error-container">
-        <h2>Oops! Something went wrong</h2>
-        <p>{error}</p>
-        <button onClick={loadData}>Try Again</button>
+        <h2>Unable to load products</h2>
+        <p>Check your connection and try again.</p>
+        <Button onClick={() => refetch()}>Retry</Button>
       </div>
     );
   }
 
   return (
     <div className="shop">
-      <div className="shop-header">
-        <h1>Shop Our Collection</h1>
-        <p>Discover {products.length} amazing products</p>
+      <div className="shop__header">
+        <h1 className="shop__title">All Products</h1>
+        <p className="shop__subtitle">{products.length} items</p>
       </div>
 
-      <div className="shop-filters">
+      <div className="shop__filters">
         <div className="filter-group">
-          <label htmlFor="search">Search</label>
+          <label htmlFor="search" className="filter-label">Search</label>
           <input
             id="search"
-            type="text"
+            type="search"
             placeholder="Search products..."
             value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="search-input"
+            onChange={(e) => updateParam('q', e.target.value, '')}
+            className="filter-input"
+            aria-label="Search products"
           />
         </div>
 
         <div className="filter-group">
-          <label htmlFor="category">Category</label>
+          <label htmlFor="category" className="filter-label">Category</label>
           <select
             id="category"
             value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
+            onChange={(e) => updateParam('category', e.target.value, 'all')}
             className="filter-select"
           >
             <option value="all">All Categories</option>
@@ -128,26 +127,38 @@ const Shop: React.FC = () => {
         </div>
 
         <div className="filter-group">
-          <label htmlFor="sort">Sort By</label>
+          <label htmlFor="sort" className="filter-label">Sort by</label>
           <select
             id="sort"
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
+            onChange={(e) => updateParam('sort', e.target.value, 'name')}
             className="filter-select"
           >
-            <option value="name">Name (A-Z)</option>
-            <option value="price-asc">Price (Low to High)</option>
-            <option value="price-desc">Price (High to Low)</option>
-            <option value="rating">Rating</option>
+            <option value="name">Name (A–Z)</option>
+            <option value="price-asc">Price: Low to High</option>
+            <option value="price-desc">Price: High to Low</option>
+            <option value="rating">Top Rated</option>
           </select>
         </div>
       </div>
 
-      <div className="results-count">
-        Showing {filteredProducts.length} of {products.length} products
-      </div>
+      {!productsLoading && (
+        <p className="shop__count">
+          Showing {filteredProducts.length} of {products.length} products
+        </p>
+      )}
 
-      <ProductGrid products={filteredProducts} />
+      <ProductGrid
+        products={filteredProducts}
+        isLoading={productsLoading}
+        skeletonCount={8}
+        onQuickView={setQuickViewProduct}
+      />
+
+      <QuickView
+        product={quickViewProduct}
+        onClose={() => setQuickViewProduct(null)}
+      />
     </div>
   );
 };

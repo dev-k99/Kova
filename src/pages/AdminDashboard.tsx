@@ -1,145 +1,103 @@
-import React, { useEffect, useState } from 'react';
-import { useCart } from '../context/CartContext';
-import { useWishlist } from '../context/WishlistContext';
-import { productsApi } from '../api/products';
-import { Product } from '../types/product.types';
-import { formatCurrency, formatNumber } from '../utils/currency';
+import React, { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import {
+  DollarSign, Package, ShoppingBag, Heart,
+  ShoppingCart, Star, User, TrendingUp,
+} from 'lucide-react';
+import { useCart } from '../hooks/useCart';
+import { useWishlist } from '../hooks/useWishlist';
+import { productsApi, productQueryKeys } from '../api/products';
+import { formatPrice, formatNumber } from '../utils/currency';
 import LoadingSpinner from '../components/common/LoadingSpinner';
 import './AdminDashboard.css';
 
-interface SalesData {
-  totalRevenue: number;
-  totalOrders: number;
-  totalProducts: number;
-  wishlistItems: number;
-  avgOrderValue: number;
-  topCategories: { category: string; count: number }[];
-}
-
 const AdminDashboard: React.FC = () => {
-  const { cart } = useCart();
-  const { wishlist } = useWishlist();
-  const [products, setProducts] = useState<Product[]>([]);
-  const [salesData, setSalesData] = useState<SalesData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const { cart }      = useCart();
+  const { wishlist }  = useWishlist();
 
-  useEffect(() => {
-    loadDashboardData();
-  }, [cart, wishlist]);
+  const { data: products = [], isLoading } = useQuery({
+    queryKey: productQueryKeys.lists(),
+    queryFn: productsApi.getAll,
+  });
 
-  const loadDashboardData = async () => {
-    try {
-      setIsLoading(true);
-      const productsData = await productsApi.getAll();
-      setProducts(productsData);
+  const metrics = useMemo(() => {
+    const totalOrders   = products.length > 0 ? 87 : 0; // deterministic mock
+    const avgOrderValue = totalOrders > 0 ? cart.totalPrice / totalOrders : 0;
 
-      // Calculate sales data
-      const totalRevenue = cart.totalPrice;
-      const totalOrders = Math.floor(Math.random() * 150) + 50; // Mock data
-      const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+    const categoryMap = new Map<string, number>();
+    products.forEach((p) => {
+      categoryMap.set(p.category, (categoryMap.get(p.category) ?? 0) + 1);
+    });
 
-      // Calculate category distribution
-      const categoryMap = new Map<string, number>();
-      productsData.forEach(product => {
-        const count = categoryMap.get(product.category) || 0;
-        categoryMap.set(product.category, count + 1);
-      });
+    const topCategories = Array.from(categoryMap.entries())
+      .map(([category, count]) => ({ category, count }))
+      .sort((a, b) => b.count - a.count);
 
-      const topCategories = Array.from(categoryMap.entries())
-        .map(([category, count]) => ({ category, count }))
-        .sort((a, b) => b.count - a.count);
+    return {
+      totalRevenue:   cart.totalPrice,
+      totalOrders,
+      avgOrderValue,
+      totalProducts:  products.length,
+      wishlistItems:  wishlist.length,
+      topCategories,
+    };
+  }, [products, cart.totalPrice, wishlist.length]);
 
-      setSalesData({
-        totalRevenue,
-        totalOrders,
-        totalProducts: productsData.length,
-        wishlistItems: wishlist.length,
-        avgOrderValue,
-        topCategories,
-      });
-    } catch (error) {
-      console.error('Error loading dashboard data:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  if (isLoading) {
-    return <LoadingSpinner fullScreen />;
-  }
+  if (isLoading) return <LoadingSpinner fullScreen />;
 
   return (
-    <div className="admin-dashboard">
-      <div className="admin-header">
-        <h1>Admin Dashboard</h1>
-        <p>Overview of your e-commerce store</p>
+    <div className="admin">
+      <div className="admin__header">
+        <h1 className="admin__title">Dashboard</h1>
+        <p className="admin__subtitle">Store overview</p>
       </div>
 
-      {/* Key Metrics */}
       <div className="metrics-grid">
-        <div className="metric-card">
-          <div className="metric-icon" style={{ background: '#dbeafe' }}>
-            💰
-          </div>
-          <div className="metric-info">
-            <p className="metric-label">Total Revenue</p>
-            <h3 className="metric-value">{formatCurrency(salesData?.totalRevenue || 0)}</h3>
-            <span className="metric-change positive">+12.5% from last month</span>
-          </div>
-        </div>
-
-        <div className="metric-card">
-          <div className="metric-icon" style={{ background: '#fef3c7' }}>
-            📦
-          </div>
-          <div className="metric-info">
-            <p className="metric-label">Total Orders</p>
-            <h3 className="metric-value">{formatNumber(salesData?.totalOrders || 0)}</h3>
-            <span className="metric-change positive">+8.2% from last month</span>
-          </div>
-        </div>
-
-        <div className="metric-card">
-          <div className="metric-icon" style={{ background: '#dcfce7' }}>
-            🛍️
-          </div>
-          <div className="metric-info">
-            <p className="metric-label">Products</p>
-            <h3 className="metric-value">{formatNumber(salesData?.totalProducts || 0)}</h3>
-            <span className="metric-change neutral">Active listings</span>
-          </div>
-        </div>
-
-        <div className="metric-card">
-          <div className="metric-icon" style={{ background: '#fce7f3' }}>
-            💝
-          </div>
-          <div className="metric-info">
-            <p className="metric-label">Wishlist Items</p>
-            <h3 className="metric-value">{formatNumber(salesData?.wishlistItems || 0)}</h3>
-            <span className="metric-change neutral">Saved by customers</span>
-          </div>
-        </div>
+        <MetricCard
+          icon={<DollarSign size={20} strokeWidth={1.5} aria-hidden />}
+          label="Total Revenue"
+          value={formatPrice(metrics.totalRevenue)}
+          change="+12.5%"
+          positive
+        />
+        <MetricCard
+          icon={<Package size={20} strokeWidth={1.5} aria-hidden />}
+          label="Total Orders"
+          value={formatNumber(metrics.totalOrders)}
+          change="+8.2%"
+          positive
+        />
+        <MetricCard
+          icon={<ShoppingBag size={20} strokeWidth={1.5} aria-hidden />}
+          label="Products"
+          value={formatNumber(metrics.totalProducts)}
+          change="Active listings"
+        />
+        <MetricCard
+          icon={<Heart size={20} strokeWidth={1.5} aria-hidden />}
+          label="Wishlist Items"
+          value={formatNumber(metrics.wishlistItems)}
+          change="Saved by customers"
+        />
       </div>
 
-      {/* Additional Stats */}
       <div className="stats-grid">
         <div className="stats-card">
-          <h3>Category Distribution</h3>
+          <h3 className="stats-card__title">Category Distribution</h3>
           <div className="category-list">
-            {salesData?.topCategories.map((cat) => (
+            {metrics.topCategories.map((cat) => (
               <div key={cat.category} className="category-item">
-                <div className="category-info">
-                  <span className="category-name">{cat.category}</span>
-                  <span className="category-count">{cat.count} products</span>
+                <div className="category-item__header">
+                  <span className="category-item__name">{cat.category}</span>
+                  <span className="category-item__count">{cat.count} products</span>
                 </div>
                 <div className="category-bar">
-                  <div 
-                    className="category-fill" 
-                    style={{ 
-                      width: `${(cat.count / (salesData?.totalProducts || 1)) * 100}%` 
+                  <div
+                    className="category-bar__fill"
+                    style={{
+                      width: `${(cat.count / (metrics.totalProducts || 1)) * 100}%`,
                     }}
-                  ></div>
+                  />
                 </div>
               </div>
             ))}
@@ -147,45 +105,30 @@ const AdminDashboard: React.FC = () => {
         </div>
 
         <div className="stats-card">
-          <h3>Recent Activity</h3>
+          <h3 className="stats-card__title">Recent Activity</h3>
           <div className="activity-list">
-            <div className="activity-item">
-              <div className="activity-icon">🛒</div>
-              <div className="activity-info">
-                <p className="activity-title">New order received</p>
-                <span className="activity-time">2 minutes ago</span>
+            {[
+              { icon: <ShoppingCart size={16} strokeWidth={1.5} aria-hidden />, label: 'New order received', time: '2 min ago' },
+              { icon: <Star size={16} strokeWidth={1.5} aria-hidden />,         label: 'New product review', time: '15 min ago' },
+              { icon: <User size={16} strokeWidth={1.5} aria-hidden />,         label: 'New customer registration', time: '1 hr ago' },
+              { icon: <Package size={16} strokeWidth={1.5} aria-hidden />,      label: 'Order shipped', time: '2 hr ago' },
+            ].map((item, i) => (
+              <div key={i} className="activity-item">
+                <div className="activity-item__icon">{item.icon}</div>
+                <div className="activity-item__info">
+                  <p className="activity-item__label">{item.label}</p>
+                  <span className="activity-item__time">{item.time}</span>
+                </div>
               </div>
-            </div>
-            <div className="activity-item">
-              <div className="activity-icon">⭐</div>
-              <div className="activity-info">
-                <p className="activity-title">New product review</p>
-                <span className="activity-time">15 minutes ago</span>
-              </div>
-            </div>
-            <div className="activity-item">
-              <div className="activity-icon">👤</div>
-              <div className="activity-info">
-                <p className="activity-title">New customer registration</p>
-                <span className="activity-time">1 hour ago</span>
-              </div>
-            </div>
-            <div className="activity-item">
-              <div className="activity-icon">📦</div>
-              <div className="activity-info">
-                <p className="activity-title">Order shipped</p>
-                <span className="activity-time">2 hours ago</span>
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </div>
 
-      {/* Top Products Table */}
       <div className="products-table-container">
-        <div className="table-header">
-          <h3>Top Products</h3>
-          <span className="product-count">{products.length} total products</span>
+        <div className="products-table__header">
+          <h3 className="stats-card__title">Top Products</h3>
+          <span className="products-table__count">{products.length} total</span>
         </div>
         <div className="products-table">
           <table>
@@ -194,7 +137,11 @@ const AdminDashboard: React.FC = () => {
                 <th>Product</th>
                 <th>Category</th>
                 <th>Price</th>
-                <th>Rating</th>
+                <th>
+                  <span className="th-rating">
+                    <Star size={12} strokeWidth={1.5} aria-hidden /> Rating
+                  </span>
+                </th>
                 <th>Reviews</th>
                 <th>Status</th>
               </tr>
@@ -204,27 +151,25 @@ const AdminDashboard: React.FC = () => {
                 <tr key={product.id}>
                   <td>
                     <div className="product-cell">
-                      <img 
-                        src={product.image} 
+                      <img
+                        src={product.image}
                         alt={product.title}
-                        className="product-thumb"
+                        className="product-cell__thumb"
+                        loading="lazy"
                       />
-                      <span className="product-name">{product.title}</span>
+                      <span className="product-cell__name">{product.title}</span>
                     </div>
                   </td>
-                  <td>
-                    <span className="category-badge">{product.category}</span>
-                  </td>
-                  <td className="price-cell">{formatCurrency(product.price)}</td>
+                  <td><span className="category-badge">{product.category}</span></td>
+                  <td className="price-cell">{formatPrice(product.price)}</td>
                   <td>
                     <div className="rating-cell">
-                      <span>⭐ {product.rating.rate.toFixed(1)}</span>
+                      <TrendingUp size={12} strokeWidth={1.5} aria-hidden />
+                      {product.rating.rate.toFixed(1)}
                     </div>
                   </td>
                   <td>{formatNumber(product.rating.count)}</td>
-                  <td>
-                    <span className="status-badge active">Active</span>
-                  </td>
+                  <td><span className="status-badge">Active</span></td>
                 </tr>
               ))}
             </tbody>
@@ -234,5 +179,26 @@ const AdminDashboard: React.FC = () => {
     </div>
   );
 };
+
+interface MetricCardProps {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  change: string;
+  positive?: boolean;
+}
+
+const MetricCard: React.FC<MetricCardProps> = ({ icon, label, value, change, positive }) => (
+  <div className="metric-card">
+    <div className="metric-card__icon">{icon}</div>
+    <div className="metric-card__info">
+      <p className="metric-card__label">{label}</p>
+      <h3 className="metric-card__value">{value}</h3>
+      <span className={`metric-card__change ${positive ? 'metric-card__change--positive' : ''}`}>
+        {change}
+      </span>
+    </div>
+  </div>
+);
 
 export default AdminDashboard;

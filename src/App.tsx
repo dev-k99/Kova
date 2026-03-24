@@ -1,37 +1,52 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import { CartProvider } from './context/CartContext';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ToastProvider } from './context/ToastContext';
-import { WishlistProvider } from './context/WishlistContext';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 import Layout from './components/layout/Layout';
-import Home from './pages/Home';
-import Shop from './pages/Shop';
-import Cart from './pages/Cart';
-import Wishlist from './pages/Wishlist';
-import AdminDashboard from './pages/AdminDashboard';
+import LoadingSpinner from './components/common/LoadingSpinner';
 import './App.css';
 
-const App: React.FC = () => {
-  return (
-    <ToastProvider>
-      <WishlistProvider>
-        <CartProvider>
-          <Router>
-            <Layout>
+const Home           = lazy(() => import('./pages/Home'));
+const Shop           = lazy(() => import('./pages/Shop'));
+const Cart           = lazy(() => import('./pages/Cart'));
+const Wishlist       = lazy(() => import('./pages/Wishlist'));
+const ProductDetail  = lazy(() => import('./pages/ProductDetail'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
+const NotFound       = lazy(() => import('./pages/NotFound'));
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 5 * 60 * 1000,
+      retry: 3,
+      retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 30_000),
+    },
+  },
+});
+
+const App: React.FC = () => (
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <ToastProvider>
+        <Router>
+          <Layout>
+            <Suspense fallback={<LoadingSpinner fullScreen />}>
               <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/shop" element={<Shop />} />
-                <Route path="/cart" element={<Cart />} />
+                <Route path="/"       element={<Home />} />
+                <Route path="/shop"   element={<Shop />} />
+                <Route path="/cart"   element={<Cart />} />
                 <Route path="/wishlist" element={<Wishlist />} />
-                <Route path="/admin" element={<AdminDashboard />} />
-                <Route path="*" element={<Home />} />
+                <Route path="/product/:id" element={<ProductDetail />} />
+                <Route path="/admin"  element={<AdminDashboard />} />
+                <Route path="*"       element={<NotFound />} />
               </Routes>
-            </Layout>
-          </Router>
-        </CartProvider>
-      </WishlistProvider>
-    </ToastProvider>
-  );
-};
+            </Suspense>
+          </Layout>
+        </Router>
+      </ToastProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
+);
 
 export default App;
